@@ -22,7 +22,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.android.trackmysleepquality.R
@@ -51,31 +50,31 @@ class SleepQualityFragment : Fragment() {
 
         val application = requireNotNull(this.activity).application
 
+        // get the arguments using safeargs plugIn
         val arguments = SleepQualityFragmentArgs.fromBundle(arguments!!)
 
-        // Create an instance of the ViewModel Factory.
+        //get the DAO
         val dataSource = SleepDatabase.getInstance(application).sleepDatabaseDao
-        val viewModelFactory = SleepQualityViewModelFactory(arguments.sleepNightKey, dataSource)
 
-        // Get a reference to the ViewModel associated with this fragment.
-        val sleepQualityViewModel =
-                ViewModelProvider(
-                        this, viewModelFactory).get(SleepQualityViewModel::class.java)
+        //Create factory
+        val factory = SleepQualityViewModelFactory(arguments.sleepNightKey, dataSource)
 
-        // To use the View Model with data binding, you have to explicitly
-        // give the binding object a reference to it.
+        // get the viewModel
+        val sleepQualityViewModel = ViewModelProvider(this, factory)
+                .get(SleepQualityViewModel::class.java)
+
+        //set the viewModel to the variable in the XML file
         binding.sleepQualityViewModel = sleepQualityViewModel
 
-        // Add an Observer to the state variable for Navigating when a Quality icon is tapped.
-        sleepQualityViewModel.navigateToSleepTracker.observe(this, Observer {
-            if (it == true) { // Observed state is true.
+        // observe the navigation event
+        sleepQualityViewModel.navigateToSleepTracker.observe(viewLifecycleOwner) {
+            if (it == true) {
                 this.findNavController().navigate(
-                        SleepQualityFragmentDirections.actionSleepQualityFragmentToSleepTrackerFragment())
-                // Reset state to make sure we only navigate once, even if the device
-                // has a configuration change.
-                sleepQualityViewModel.doneNavigating()
+                        SleepQualityFragmentDirections.actionSleepQualityFragmentToSleepTrackerFragment()
+                )
+                sleepQualityViewModel.doneNavigating() // reset the value of the navigateToSleepTracker event in the viewModel
             }
-        })
+        }
 
         return binding.root
     }
